@@ -4,9 +4,10 @@ import type { Paste } from "@/lib/types";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }   // 👈 synchronous params
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const paste = await redis.get<Paste>(`paste:${params.id}`);
+  const { id } = await params;
+  const paste = await redis.get<Paste>(`paste:${id}`);
 
   if (!paste) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -17,7 +18,7 @@ export async function GET(
   }
 
   paste.views += 1;
-  await redis.set(`paste:${params.id}`, paste);
+  await redis.set(`paste:${id}`, paste);
 
   return NextResponse.json({ content: paste.content });
 }
